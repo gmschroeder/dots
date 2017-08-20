@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>mobileDots</title>
+</head>
+<body>
+  <script src="node_modules/p5/lib/p5.min.js"></script>
+  <script src="js/p5.collide2D/p5.collide2d.min.js"></script>
+  <script> 
+      
+      var dots;
+      var canvasColor;
+      function setup() {
+          canvasColor = random(255);
+          dots = [];
+          var canvasSize = {
+              'width': innerWidth - 20,
+              'height': innerHeight - 20
+          };
+          createCanvas(innerWidth - 20, innerHeight - 20);
+          background(canvasColor);                        
+          noStroke();
+      }
+      
+      function draw() {
+          // eventually 'bounce' 0 => 255, 255 => 0
+          background((canvasColor+= .5) % 255);
+          
+          for (var i=0; i<= dots.length - 1; i++) {
+              dots[i].detectEdgeCollision();
+              dots[i].detectDotCollision(dots);
+              dots[i].move();
+              dots[i].display();
+            }
+      }
+            
+      function Dot() {
+          this.x = mouseX;
+          this.y = mouseY;
+          this.diameter = 50;
+          // replace with x/y values - method for calculating?
+          this.speed = {
+              'x': 20,
+              'y': 20
+          };
+          
+          this.color = random(255);
+          
+          this.move = function() {
+              this.x += this.speed['x'];
+              this.y += this.speed['y'];
+          };          
+          this.display = function() {
+              fill(this.color);
+              ellipse(this.x, this.y, this.diameter, this.diameter);
+          }
+
+          // determine if another dot is touching this one
+          this.detectDotCollision = function(dotArray){
+              // cycle through array of dots
+              for(var i=0; i < dotArray.length; i++) {
+                  
+                  // skip itself
+                  if(dotArray[i] !== this){
+                      
+                      //colliding with anything?
+                      this.hit = collideCircleCircle(
+                          this.x, this.y, this.diameter, dotArray[i].x, dotArray[i].y, dotArray[i].diameter
+                      ); 
+                      
+                      if(this.hit === true){
+                          console.log("dot collision!")
+                          this.x = random(width)
+                          this.y = random(height)
+					}
+                  }
+              }
+          }
+          
+          this.detectEdgeCollision = function() {
+              // horizontal edge detection
+              if (this.x + this.diameter * 1.5 >= innerWidth || this.x - this.diameter * 1.5 <= 0) {
+                  this.speed['x'] = this.speed['x'] * -1;
+              };
+              // vertical edge detection
+              if (this.y + this.diameter * 1.5 >= innerHeight ||this.y - this.diameter * 1.5 <= 0) {
+                  this.speed['y'] = this.speed['y'] * -1;
+              };
+          };
+      }
+      
+      function mousePressed() {
+          dots.push(new Dot());        
+      };
+  
+  </script>
+</body>
+</html>
