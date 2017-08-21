@@ -6,30 +6,44 @@
 </head>
 <body>
   <script src="node_modules/p5/lib/p5.min.js"></script>
+  <script src="node_modules/p5/lib/addons/p5.sound.js"></script>
   <script src="js/p5.collide2D/p5.collide2d.min.js"></script>
   <script> 
       
+
       var dots;
       var canvasColor;
+      
       function setup() {
-          canvasColor = random(255);
+          canvasColor = 0;
           dots = [];
           var canvasSize = {
               'width': innerWidth,
               'height': innerHeight
           };
+          
+          
+          
           createCanvas(canvasSize['width'], canvasSize['height']);
           background(canvasColor);                        
           noStroke();
+          
+
       }
       
+
+  // Patch the input to an volume analyzer
+  
+      
+      
       function draw() {
-          // eventually 'bounce' 0 => 255, 255 => 0
-          background((canvasColor+= .5) % 255);
+          background(128)
+          var amplitudeSum;
           
           for (var i=0; i<= dots.length - 1; i++) {
               dots[i].detectEdgeCollision();
               dots[i].detectDotCollision(dots);
+              this.
               dots[i].move();
               dots[i].display();
             }
@@ -39,13 +53,45 @@
           this.x = mouseX;
           this.y = mouseY;
           this.diameter = 50;
-          // replace with x/y values - method for calculating?
           this.speed = {
               'x': 20,
               'y': 20
           };
           
+          // amplitude measuring
+          this.analyzer = new p5.Amplitude();
+          this.analyzer.setInput(this.osc);
+          //this.rms = this.analyzer.getLevel();
+          this.rms = 0;
+          
           this.color = random(255);
+          // root third fourth fifth seventh
+          this.scaleArray = [60, 64, 65, 67, 71, 72];
+          this.note = 0;
+          
+
+          
+          this.osc = new p5.SinOsc();
+          
+          // Instantiate the envelope
+          this.envelope = new p5.Env();
+          
+          // set attackTime, decayTime, sustainRatio, releaseTime
+          this.envelope.setADSR(0.001, 0.5, 0.1, 0.5);
+          
+          // set attackLevel, releaseLevel
+          this.envelope.setRange(1, 0);
+          this.osc.start();
+          
+          this.pluck = function() {
+              this.note = Math.floor(random(this.scaleArray.length));
+              console.log(this.note);
+              this.midiValue = this.scaleArray[this.note];
+              this.freqValue = midiToFreq(this.midiValue);
+              this.osc.freq(this.freqValue);
+              this.envelope.play(this.osc, 0, 0.1);
+              this.rms = this.analyzer.getLevel();
+          }
           
           this.move = function() {
               this.x += this.speed['x'];
@@ -70,9 +116,16 @@
                       ); 
                       
                       if(this.hit === true){
-                          console.log("dot collision!")
-                          this.x = random(innerWidth - this.diameter);
-                          this.y = random(innerHeight - this.diameter);
+                          dotArray[i]['x'].speed = -1 * dotArray[i].speed['x'];
+                          dotArray[i]['y'].speed = -1 * dotArray[i]['x'].speed;
+                          this.speed['x'] = -1 * this.speed['x'];
+                          this.speed['y'] = -1 * this.speed['y'];
+                          // cludge to prevent dots from getting 'stuck' together
+                          this.x += this.diameter + 5;
+                          this.y += this.diameter + 5;
+                          
+                          /*this.x = random(innerWidth - this.diameter);
+                          this.y = random(innerHeight - this.diameter);*/
 					}
                   }
               }
@@ -83,20 +136,24 @@
               if (this.x + this.diameter > innerWidth) {
                   this.speed['x'] = this.speed['x'] * -1;
                   this.x -= this.diameter - 5;
+                  this.pluck();
               } 
               if (this.x - this.diameter < 0) {
                   this.speed['x'] = this.speed['x'] * -1;
                   this.x += this.diameter + 5;
-                  
+                  this.pluck();
               };
+              
               // vertical edge detection
               if (this.y + this.diameter > innerHeight) {
                   this.speed['y'] = this.speed['y'] * -1;
                   this.y -= this.diameter - 5;
+                  this.pluck();
               } 
               if (this.y - this.diameter < 0) {
                   this.speed['y'] = this.speed['y'] * -1;
                   this.y += this.diameter + 5;
+                  this.pluck();
 
               };
           };
