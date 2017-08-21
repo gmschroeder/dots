@@ -13,7 +13,7 @@
 
       var dots;
       var canvasColor;
-      
+      var dotAmplitude;
       function setup() {
           canvasColor = 0;
           dots = [];
@@ -38,10 +38,9 @@
       
       function draw() {
           background(128)
-          var amplitudeSum;
-          
+          dotAmplitude = Math.floor(1 / dots.length * 0.01);
           for (var i=0; i<= dots.length - 1; i++) {
-              dots[i].detectEdgeCollision();
+              dots[i].detectEdgeCollision(dotAmplitude);
               dots[i].detectDotCollision(dots);
               this.
               dots[i].move();
@@ -54,24 +53,20 @@
           this.y = mouseY;
           this.diameter = 50;
           this.speed = {
-              'x': 20,
-              'y': 20
+              'x': 10,
+              'y': 10
           };
           
-          // amplitude measuring
-          this.analyzer = new p5.Amplitude();
-          this.analyzer.setInput(this.osc);
-          //this.rms = this.analyzer.getLevel();
-          this.rms = 0;
+          
           
           this.color = random(255);
-          // root third fourth fifth seventh
-          this.scaleArray = [60, 64, 65, 67, 71, 72];
+          
+          // some arbitrary scale
+          this.scaleArray = [48, 52, 55, 58];
           this.note = 0;
           
-
+          this.osc = new p5.SawOsc();
           
-          this.osc = new p5.SinOsc();
           
           // Instantiate the envelope
           this.envelope = new p5.Env();
@@ -80,17 +75,16 @@
           this.envelope.setADSR(0.001, 0.5, 0.1, 0.5);
           
           // set attackLevel, releaseLevel
-          this.envelope.setRange(1, 0);
+          this.envelope.setRange(0.5, 0);
           this.osc.start();
           
-          this.pluck = function() {
+          this.pluck = function(amplitude) {
               this.note = Math.floor(random(this.scaleArray.length));
-              console.log(this.note);
               this.midiValue = this.scaleArray[this.note];
               this.freqValue = midiToFreq(this.midiValue);
               this.osc.freq(this.freqValue);
+              this.osc.amp(amplitude);
               this.envelope.play(this.osc, 0, 0.1);
-              this.rms = this.analyzer.getLevel();
           }
           
           this.move = function() {
@@ -131,29 +125,29 @@
               }
           }
           
-          this.detectEdgeCollision = function() {
+          this.detectEdgeCollision = function(amps) {
               // horizontal edge detection
               if (this.x + this.diameter > innerWidth) {
                   this.speed['x'] = this.speed['x'] * -1;
                   this.x -= this.diameter - 5;
-                  this.pluck();
+                  this.pluck(amps);
               } 
               if (this.x - this.diameter < 0) {
                   this.speed['x'] = this.speed['x'] * -1;
                   this.x += this.diameter + 5;
-                  this.pluck();
+                  this.pluck(amps);
               };
               
               // vertical edge detection
               if (this.y + this.diameter > innerHeight) {
                   this.speed['y'] = this.speed['y'] * -1;
                   this.y -= this.diameter - 5;
-                  this.pluck();
+                  this.pluck(amps);
               } 
               if (this.y - this.diameter < 0) {
                   this.speed['y'] = this.speed['y'] * -1;
                   this.y += this.diameter + 5;
-                  this.pluck();
+                  this.pluck(amps);
 
               };
           };
