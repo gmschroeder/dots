@@ -1,23 +1,23 @@
-      var dots;
-      var canvasColor;
-      var dotAmplitude;
+var dots;
+var canvasColor;
+var dotAmplitude;
+canvasColor = 0;
+
+var canvasSize = {
+    'width': innerWidth - 30,
+    'height': innerHeight - 30
+};
       function setup() {
-          canvasColor = 0;
           dots = [];
-          var canvasSize = {
-              'width': innerWidth,
-              'height': innerHeight
-          };
           
-          
-          
-          createCanvas(canvasSize['width'], canvasSize['height']);
+          createCanvas(canvasSize.width, canvasSize.height);
           background(canvasColor);                        
           noStroke();
-          
 
       }
-      
+
+// how make collisions happen closer to impact time?
+// how can I rotate from portrait to landscape w/o change for worse?
       function draw() {
           background(128)
           dotAmplitude = Math.floor(1 / dots.length * 0.01);
@@ -42,8 +42,8 @@
           
           this.color = random(255);
           
-          // some arbitrary scale
-          this.scaleArray = [48, 51, 53, 55, 58, 60];
+          // some arbitrary arpreggio 
+          this.scaleArray = [48, 51, 55, 60];
           this.note = 0;
           
           this.osc = new p5.SawOsc();
@@ -54,13 +54,14 @@
           this.envelope = new p5.Env();
           
           // set attackTime, decayTime, sustainRatio, releaseTime
-          this.envelope.setADSR(0.001, 0.2, 0.01, 0.5);
+          this.envelope.setADSR(0.001, 0.5, 0.01, 0.25);
           
           // set attackLevel, releaseLevel
           this.envelope.setRange(0.5, 0);
           this.osc.start();
           
           this.pluck = function(amplitude) {
+              // explicitly describe (gracefully) ending note if new note starts
               this.note = Math.floor(random(this.scaleArray.length));
               this.midiValue = this.scaleArray[this.note];
               this.freqValue = midiToFreq(this.midiValue);
@@ -70,8 +71,8 @@
           }
           
           this.move = function() {
-              this.x += this.speed['x'];
-              this.y += this.speed['y'];
+              this.x += this.speed.x;
+              this.y += this.speed.y;
           };          
           this.display = function() {
               fill(this.color);
@@ -92,10 +93,10 @@
                       ); 
                       
                       if(this.hit === true){
-                          dotArray[i]['x'].speed = -1 * dotArray[i].speed['x'];
-                          dotArray[i]['y'].speed = -1 * dotArray[i]['x'].speed;
-                          this.speed['x'] = -1 * this.speed['x'];
-                          this.speed['y'] = -1 * this.speed['y'];
+                          dotArray[i].x.speed = -1 * dotArray[i].speed.x;
+                          dotArray[i].y.speed = -1 * dotArray[i].x.speed;
+                          this.speed.x = -1 * this.speed.x;
+                          this.speed.y = -1 * this.speed.y;
                           // cludge to prevent dots from getting 'stuck' together
                           this.x += this.diameter + 5;
                           this.y += this.diameter + 5;
@@ -107,40 +108,40 @@
           
           this.detectEdgeCollision = function(amps) {
               // horizontal edge detection
-              if (this.x + this.diameter > innerWidth) {
-                  this.speed['x'] = this.speed['x'] * -1;
-                  this.x -= this.diameter - 5;
+              if (this.x + this.diameter > canvasSize.width) {
                   this.pluck(amps);
+                  this.speed.x = this.speed.x * -1;
+                  this.x -= this.diameter - 5;
+                  
               } 
               if (this.x - this.diameter < 0) {
-                  this.speed['x'] = this.speed['x'] * -1;
-                  this.x += this.diameter + 5;
                   this.pluck(amps);
+                  this.speed.x = this.speed.x * -1;
+                  this.x += this.diameter + 5;
               };
               
               // vertical edge detection
-              if (this.y + this.diameter > innerHeight) {
-                  this.speed['y'] = this.speed['y'] * -1;
-                  this.y -= this.diameter - 5;
+              if (this.y + this.diameter > canvasSize.height) {
                   this.pluck(amps);
+                  this.speed.y = this.speed.y * -1;
+                  this.y -= this.diameter - 5;
               } 
               if (this.y - this.diameter < 0) {
-                  this.speed['y'] = this.speed['y'] * -1;
-                  this.y += this.diameter + 5;
                   this.pluck(amps);
-
+                  this.speed.y = this.speed.y * -1;
+                  this.y += this.diameter + 5;
               };
           };
       }
       
-     
       function touchEnded() {
           dots.push(new Dot());
           return false;
       }
 
+      // Was refreshing size on each iteration. now that the size of the canvas is fixed, is not called. Refactoring.
       function windowResized() {
-          resizeCanvas(innerWidth,innerHeight);
+          resizeCanvas(canvasSize.width,canvasSize.height);
       }
   
 
